@@ -10,7 +10,7 @@ type a query and see results from all 4 search types at once:
 
 - **lexical** — exact term matching using elasticsearch
 - **fuzzy** — typo-tolerant matching using elasticsearch fuzziness
-- **phonetic** — sounds-like matching using elasticsearch phonetic analyzer
+- **phonetic** — sounds-like matching using soundex + synonym expansion
 - **semantic** — meaning-based matching using azure openai embeddings + chromadb
 
 ## tech stack
@@ -29,7 +29,7 @@ frontend (react :5173)
 backend (express :3001)
   ├── lexical   → elasticsearch (exact match)
   ├── fuzzy     → elasticsearch (fuzziness: AUTO)
-  ├── phonetic  → elasticsearch (phonetic analyzer)
+  ├── phonetic  → node.js (soundex-code + synonym expansion)
   └── semantic  → semantic-api (fastapi :8000) → chromadb
 ```
 
@@ -47,8 +47,6 @@ backend (express :3001)
 ```bash
 docker compose up -d
 ```
-
-this starts elasticsearch 8.12 with the phonetic analysis plugin.
 
 ### 2. backend
 
@@ -81,16 +79,17 @@ npm run dev  # runs on :5173
 ## project structure
 
 ```
-docker-compose.yml              # elasticsearch with phonetic plugin
+docker-compose.yml              # elasticsearch 8.12
 backend/
   server.js                     # express api with /search and /search-all
   esClient.js                   # elasticsearch connection
-  createIndex.js                # index schema with phonetic + synonym analyzers
-  seed.js                       # seed 15 curated articles
+  createIndex.js                # index schema with standard analyzer
+  articles.js                   # shared 15 curated articles
+  seed.js                       # seed articles into elasticsearch
   searchHandlers/
     lexical.js                  # elasticsearch multi_match query
     fuzzy.js                    # elasticsearch fuzzy query
-    phonetic.js                 # elasticsearch phonetic analyzer query
+    phonetic.js                 # soundex-code + synonym expansion
     semantic.js                 # proxies to python semantic api
 semantic-api/
   main.py                       # fastapi server with azure openai embeddings

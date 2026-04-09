@@ -5,53 +5,23 @@ async function createIndex() {
 
   if (exists) {
     await client.indices.delete({ index: "articles" });
-    console.log("🗑️ Deleted old index");
+    console.log("Deleted old index");
   }
 
   await client.indices.create({
     index: "articles",
     body: {
-      settings: {
-        analysis: {
-          filter: {
-            synonym_filter: {
-              type: "synonym",
-              synonyms: [
-                "prashant, croissant",
-                "js, javascript",
-                "ai, artificial intelligence",
-                "dev, developer",
-                "resume, resumé",
-                "house, home"
-              ]
-            },
-            phonetic_filter: {
-              type: "phonetic",
-              encoder: "metaphone",
-              replace: false
-            }
-          },
-          analyzer: {
-            custom_search_analyzer: {
-              tokenizer: "standard",
-              filter: ["lowercase", "synonym_filter", "phonetic_filter"]
-            }
-          }
-        }
-      },
       mappings: {
         properties: {
-          title: { type: "text", analyzer: "custom_search_analyzer" },
-          body: { type: "text", analyzer: "custom_search_analyzer" },
-          tags: { type: "text", analyzer: "custom_search_analyzer" }
+          title: { type: "text" },
+          body: { type: "text" },
+          tags: { type: "text" }
         }
       }
     }
   });
 
-  console.log("✅ Created articles index with custom analyzer");
+  console.log("Created articles index");
 }
-
-createIndex().catch(console.error);
 
 module.exports = createIndex;
