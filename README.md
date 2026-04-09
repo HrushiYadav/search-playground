@@ -10,8 +10,8 @@ type a query and see results from all 4 search types at once:
 
 - **lexical** — exact term matching using elasticsearch
 - **fuzzy** — typo-tolerant matching using elasticsearch fuzziness
-- **phonetic** — sounds-like matching using soundex algorithm
-- **semantic** — meaning-based matching using chromadb vector search
+- **phonetic** — sounds-like matching using elasticsearch phonetic analyzer
+- **semantic** — meaning-based matching using azure openai embeddings + chromadb
 
 ## tech stack
 
@@ -19,14 +19,18 @@ type a query and see results from all 4 search types at once:
 |-------|------|
 | frontend | react 19, vite, tailwind css |
 | backend | express 5, elasticsearch 8, soundex-code |
-| semantic api | python, fastapi, chromadb |
+| semantic api | python, fastapi, chromadb, azure openai |
 
 ## architecture
 
 ```
-frontend (react)  →  backend (express :3001)  →  elasticsearch
-                                               →  soundex
-                  →  semantic-api (fastapi)    →  chromadb
+frontend (react :5173)
+  ↓ POST /search-all
+backend (express :3001)
+  ├── lexical   → elasticsearch (exact match)
+  ├── fuzzy     → elasticsearch (fuzziness: AUTO)
+  ├── phonetic  → elasticsearch (phonetic analyzer)
+  └── semantic  → semantic-api (fastapi :8000) → chromadb
 ```
 
 ## setup
@@ -35,40 +39,38 @@ frontend (react)  →  backend (express :3001)  →  elasticsearch
 
 - node.js 18+
 - python 3.10+
-- elasticsearch 8.x running locally
-- docker (optional, for elasticsearch)
+- docker
+- azure openai with `text-embedding-3-small` deployment
 
-### elasticsearch
+### 1. start elasticsearch
 
 ```bash
-# start elasticsearch with docker
-docker run -d --name elasticsearch \
-  -p 9200:9200 \
-  -e "discovery.type=single-node" \
-  -e "xpack.security.enabled=false" \
-  elasticsearch:8.17.1
+docker compose up -d
 ```
 
-### backend
+this starts elasticsearch 8.12 with the phonetic analysis plugin.
+
+### 2. backend
 
 ```bash
 cd backend
+cp .env.example .env  # edit if needed
 npm install
-node seed.js        # seed elasticsearch with sample data
-node createIndex.js # create search index
-npm start           # runs on :3001
+node seed.js          # creates index + seeds 15 articles
+npm start             # runs on :3001
 ```
 
-### semantic api
+### 3. semantic api
 
 ```bash
 cd semantic-api
+cp .env.example .env  # add your azure openai credentials
 pip install -r requirements.txt
-python seed_chroma.py  # seed chromadb
-python main.py         # runs fastapi server
+python reseed.py      # generates embeddings + seeds chromadb
+uvicorn main:app --port 8000
 ```
 
-### frontend
+### 4. frontend
 
 ```bash
 cd frontend
@@ -79,21 +81,30 @@ npm run dev  # runs on :5173
 ## project structure
 
 ```
+docker-compose.yml              # elasticsearch with phonetic plugin
 backend/
-  server.js              # express api with /search endpoint
+  server.js                     # express api with /search and /search-all
+  esClient.js                   # elasticsearch connection
+  createIndex.js                # index schema with phonetic + synonym analyzers
+  seed.js                       # seed 15 curated articles
   searchHandlers/
-    lexical.js           # elasticsearch match query
-    fuzzy.js             # elasticsearch fuzzy query
-    phonetic.js          # soundex-based matching
-    semantic.js          # proxies to python semantic api
-  seed.js                # seed data into elasticsearch
+    lexical.js                  # elasticsearch multi_match query
+    fuzzy.js                    # elasticsearch fuzzy query
+    phonetic.js                 # elasticsearch phonetic analyzer query
+    semantic.js                 # proxies to python semantic api
 semantic-api/
-  main.py                # fastapi server
-  chroma_store.py        # chromadb vector store
-  seed_chroma.py         # seed embeddings
+  main.py                       # fastapi server with azure openai embeddings
+  reseed.py                     # seed chromadb with same articles as elasticsearch
 frontend/
-  src/App.jsx            # search ui with side-by-side results
+  src/App.jsx                   # 4-column parallel search comparison ui
 ```
+
+## example queries
+
+- `prashant` — phonetic matches "croissant", semantic finds related meaning, lexical finds nothing
+- `home` — all 4 return different ranked results
+- `croisant` — fuzzy catches the typo, phonetic matches the sound
+- `ai` — synonyms expand to "artificial intelligence" across all types
 
 ## license
 
