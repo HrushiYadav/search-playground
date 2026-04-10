@@ -1,6 +1,8 @@
 # search-playground
 
-side-by-side comparison of 4 search paradigms — lexical, fuzzy, phonetic, and semantic — to demonstrate why different search types return different results for the same query.
+![preview](preview.png)
+
+side-by-side comparison of 4 search paradigms  - lexical, fuzzy, phonetic, and semantic  - to demonstrate why different search types return different results for the same query.
 
 built this after writing [deep dive on phonetic vs semantic search](https://hrushiyadav.com/blog/phonetic-vs-semantic-search) to make the concepts interactive.
 
@@ -8,10 +10,10 @@ built this after writing [deep dive on phonetic vs semantic search](https://hrus
 
 type a query and see results from all 4 search types at once:
 
-- **lexical** — exact term matching using elasticsearch
-- **fuzzy** — typo-tolerant matching using elasticsearch fuzziness
-- **phonetic** — sounds-like matching using soundex + synonym expansion
-- **semantic** — meaning-based matching using azure openai embeddings + chromadb
+- **lexical**  - exact term matching using elasticsearch
+- **fuzzy**  - typo-tolerant matching using elasticsearch fuzziness
+- **phonetic**  - sounds-like matching using soundex + synonym expansion
+- **semantic**  - meaning-based matching using azure openai embeddings + chromadb
 
 ## tech stack
 
@@ -100,10 +102,10 @@ frontend/
 
 ## example queries
 
-- `prashant` — phonetic matches "croissant", semantic finds related meaning, lexical finds nothing
-- `home` — all 4 return different ranked results
-- `croisant` — fuzzy catches the typo, phonetic matches the sound
-- `ai` — synonyms expand to "artificial intelligence" across all types
+- `prashant`  - phonetic matches "croissant", semantic finds related meaning, lexical finds nothing
+- `home`  - all 4 return different ranked results
+- `croisant`  - fuzzy catches the typo, phonetic matches the sound
+- `ai`  - synonyms expand to "artificial intelligence" across all types
 
 ## license
 
